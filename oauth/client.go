@@ -23,16 +23,16 @@ type client struct{}
 
 func NewClient() (Client, error) {
 	if !cfg.initialized {
-		return nil, fmt.Errorf("client not initialized")
+		return nil, fmt.Errorf("oauth not initialized")
 	}
 	return &client{}, nil
 }
 
-func (o *client) GetSetupURL() string {
+func (c *client) GetSetupURL() string {
 	return cfg.setupURL
 }
 
-func (o *client) GetTokensFromOAuthCode(code string) (refreshToken string, accessToken string, accessTokenExpiry time.Time, err error) {
+func (c *client) GetTokensFromOAuthCode(code string) (refreshToken string, accessToken string, accessTokenExpiry time.Time, err error) {
 	agent := fiber.Post(cfg.baseURL + "/token")
 
 	formData := fiber.AcquireArgs()
@@ -68,7 +68,7 @@ func (o *client) GetTokensFromOAuthCode(code string) (refreshToken string, acces
 	return dto.RefreshToken, dto.AccessToken, dto.accessTokenExpiry(), nil
 }
 
-func (o *client) GetTokensFromRefreshToken(rft string) (refreshToken string, accessToken string, accessTokenExpiry time.Time, err error) {
+func (c *client) GetTokensFromRefreshToken(rft string) (refreshToken string, accessToken string, accessTokenExpiry time.Time, err error) {
 	agent := fiber.Post(cfg.baseURL + "/token")
 
 	agent.ContentType("application/x-www-form-urlencoded")
@@ -96,7 +96,7 @@ func (o *client) GetTokensFromRefreshToken(rft string) (refreshToken string, acc
 	return dto.RefreshToken, dto.AccessToken, dto.accessTokenExpiry(), nil
 }
 
-func (o *client) GetRefreshTokenInfo(rft string) (userEmail string, internalUserID string, err error) {
+func (c *client) GetRefreshTokenInfo(rft string) (userEmail string, internalUserID string, err error) {
 	agent := fiber.Get(cfg.baseURL + "/refresh-tokens/" + rft)
 
 	resCode, body, errs := agent.Bytes()
@@ -118,7 +118,7 @@ func (o *client) GetRefreshTokenInfo(rft string) (userEmail string, internalUser
 	return dto.UserEmail, strconv.Itoa(dto.InternalUserID), nil
 }
 
-func (o *client) DeleteRefreshToken(rft string) error {
+func (c *client) DeleteRefreshToken(rft string) error {
 	agent := fiber.Delete(cfg.baseURL + "/refresh-tokens/" + rft)
 
 	resCode, _, errs := agent.Bytes()
