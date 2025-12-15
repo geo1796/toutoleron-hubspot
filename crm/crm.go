@@ -18,20 +18,17 @@ type CRM interface {
 	UpdateObject(accessToken, objectTypeID, id, idProperty string, properties map[string]any) error
 }
 
-type crm struct {
-	baseURL string
-}
+type crm struct{}
 
-type Config struct {
-	BaseURL string
-}
-
-func NewCRM(cfg Config) CRM {
-	return &crm{cfg.BaseURL}
+func NewCRM() (CRM, error) {
+	if !cfg.initialized {
+		return nil, fmt.Errorf("crm not initialized")
+	}
+	return &crm{}, nil
 }
 
 func (c *crm) FindObject(accessToken, objectTypeID, id, idProperty string, properties, associations []string) (Object, error) {
-	endpoint := c.baseURL + "/objects/" + objectTypeID + "/" + id
+	endpoint := cfg.objectsURL() + "/" + objectTypeID + "/" + id
 
 	params := url.Values{}
 	if idProperty != "" {
@@ -74,7 +71,7 @@ func (c *crm) FindBatch(accessToken, objectTypeID string, ids, properties []stri
 		return nil, fmt.Errorf("objects must not be empty")
 	}
 
-	endpoint := c.baseURL + "/objects/" + objectTypeID + "/batch/read"
+	endpoint := cfg.objectsURL() + "/" + objectTypeID + "/batch/read"
 
 	type batchRequestDTO struct {
 		Properties []string `json:"properties"`
@@ -135,7 +132,7 @@ func (c *crm) FindBatch(accessToken, objectTypeID string, ids, properties []stri
 }
 
 func (c *crm) FindObjectOwner(accessToken string, objectOwnerID string) (*ObjectOwner, error) {
-	endpoint := c.baseURL + "/owners/" + objectOwnerID
+	endpoint := cfg.ownersURL() + "/" + objectOwnerID
 
 	agent := fiber.Get(endpoint)
 	agent.Request().Header.Add(fiber.HeaderAuthorization, "Bearer "+accessToken)
@@ -161,7 +158,7 @@ func (c *crm) FindObjectOwner(accessToken string, objectOwnerID string) (*Object
 }
 
 func (c *crm) CreateObject(accessToken string, objectTypeID string, properties map[string]any, associations []any) error {
-	endpoint := c.baseURL + "/objects/" + objectTypeID
+	endpoint := cfg.objectsURL() + "/" + objectTypeID
 
 	agent := fiber.Post(endpoint)
 	agent.Request().Header.Add(fiber.HeaderAuthorization, "Bearer "+accessToken)
@@ -191,7 +188,7 @@ func (c *crm) CreateObject(accessToken string, objectTypeID string, properties m
 }
 
 func (c *crm) UpdateObject(accessToken, objectTypeID, id, idProperty string, properties map[string]any) error {
-	endpoint := c.baseURL + "/objects/" + objectTypeID + "/" + id
+	endpoint := cfg.objectsURL() + "/" + objectTypeID + "/" + id
 
 	if idProperty != "" {
 		params := url.Values{}

@@ -19,44 +19,27 @@ type OAuth interface {
 	DeleteRefreshToken(rft string) error
 }
 
-type oauth struct {
-	clientID     string
-	clientSecret string
-	redirectURI  string
-	setupURL     string
-	baseURL      string
-}
+type oauth struct{}
 
-type Config struct {
-	ClientID     string
-	ClientSecret string
-	RedirectUri  string
-	SetupURL     string
-	BaseURL      string
-}
-
-func NewOAuth(cfg Config) OAuth {
-	return &oauth{
-		clientID:     cfg.ClientID,
-		clientSecret: cfg.ClientSecret,
-		redirectURI:  cfg.RedirectUri,
-		setupURL:     cfg.SetupURL,
-		baseURL:      cfg.BaseURL,
+func NewOAuth() (OAuth, error) {
+	if !cfg.initialized {
+		return nil, fmt.Errorf("oauth not initialized")
 	}
+	return &oauth{}, nil
 }
 
 func (o *oauth) GetSetupURL() string {
-	return o.setupURL
+	return cfg.setupURL
 }
 
 func (o *oauth) GetTokensFromOAuthCode(code string) (refreshToken string, accessToken string, accessTokenExpiry time.Time, err error) {
-	agent := fiber.Post(o.baseURL + "/token")
+	agent := fiber.Post(cfg.baseURL + "/token")
 
 	formData := fiber.AcquireArgs()
 
-	formData.Set("client_id", o.clientID)
-	formData.Set("client_secret", o.clientSecret)
-	formData.Set("redirect_uri", o.redirectURI)
+	formData.Set("client_id", cfg.clientID)
+	formData.Set("client_secret", cfg.clientSecret)
+	formData.Set("redirect_uri", cfg.redirectURL)
 	formData.Set("grant_type", "authorization_code")
 	formData.Set("code", code)
 
@@ -86,11 +69,11 @@ func (o *oauth) GetTokensFromOAuthCode(code string) (refreshToken string, access
 }
 
 func (o *oauth) GetTokensFromRefreshToken(rft string) (refreshToken string, accessToken string, accessTokenExpiry time.Time, err error) {
-	agent := fiber.Post(o.baseURL + "/token")
+	agent := fiber.Post(cfg.baseURL + "/token")
 
 	agent.ContentType("application/x-www-form-urlencoded")
 
-	reqBody := fmt.Sprintf("grant_type=refresh_token&refresh_token=%s&client_id=%s&client_secret=%s", rft, o.clientID, o.clientSecret)
+	reqBody := fmt.Sprintf("grant_type=refresh_token&refresh_token=%s&client_id=%s&client_secret=%s", rft, cfg.clientID, cfg.clientSecret)
 
 	agent.Body([]byte(reqBody))
 
@@ -114,7 +97,7 @@ func (o *oauth) GetTokensFromRefreshToken(rft string) (refreshToken string, acce
 }
 
 func (o *oauth) GetRefreshTokenInfo(rft string) (userEmail string, internalUserID string, err error) {
-	agent := fiber.Get(o.baseURL + "/refresh-tokens/" + rft)
+	agent := fiber.Get(cfg.baseURL + "/refresh-tokens/" + rft)
 
 	resCode, body, errs := agent.Bytes()
 
@@ -136,7 +119,7 @@ func (o *oauth) GetRefreshTokenInfo(rft string) (userEmail string, internalUserI
 }
 
 func (o *oauth) DeleteRefreshToken(rft string) error {
-	agent := fiber.Delete(o.baseURL + "/refresh-tokens/" + rft)
+	agent := fiber.Delete(cfg.baseURL + "/refresh-tokens/" + rft)
 
 	resCode, _, errs := agent.Bytes()
 
