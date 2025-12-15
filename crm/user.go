@@ -12,15 +12,6 @@ type User struct {
 	Object
 }
 
-func NewUser() *User {
-	return &User{
-		Object: NewBaseObject(
-			UserInternalName,
-			UserObjectTypeID,
-		),
-	}
-}
-
 func (u *User) OwnerID() string {
 	return u.GetProperty(UserPropertyOwnerID)
 }

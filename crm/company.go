@@ -11,14 +11,6 @@ type Company struct {
 	Object
 }
 
-func NewCompany(id string) *Company {
-	baseObject := NewBaseObject(CompanyInternalName, CompanyObjectTypeID)
-
-	baseObject.ID = id
-
-	return &Company{baseObject}
-}
-
 func (c *Company) Name() string {
 	return c.GetProperty(CompanyPropertyName)
 }

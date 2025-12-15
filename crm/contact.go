@@ -13,15 +13,6 @@ type Contact struct {
 	Object
 }
 
-func NewContact() *Contact {
-	return &Contact{
-		Object: NewBaseObject(
-			ContactInternalName,
-			ContactObjectTypeID,
-		),
-	}
-}
-
 func (c *Contact) Email() string {
 	return c.GetProperty(ContactPropertyEmail)
 }

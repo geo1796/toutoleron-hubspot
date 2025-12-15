@@ -10,7 +10,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-type Client interface {
+type CRM interface {
 	FindObject(accessToken, objectTypeID, id, idProperty string, properties, associations []string) (Object, error)
 	FindBatch(accessToken, objectTypeID string, ids, properties []string) ([]Object, error)
 	FindObjectOwner(accessToken, objectOwnerID string) (*ObjectOwner, error)
@@ -18,16 +18,16 @@ type Client interface {
 	UpdateObject(accessToken, objectTypeID, id, idProperty string, properties map[string]any) error
 }
 
-type client struct{}
+type crm struct{}
 
-func NewClient() (Client, error) {
+func New() (CRM, error) {
 	if !cfg.initialized {
 		return nil, fmt.Errorf("crm not initialized")
 	}
-	return &client{}, nil
+	return &crm{}, nil
 }
 
-func (c *client) FindObject(accessToken, objectTypeID, id, idProperty string, properties, associations []string) (Object, error) {
+func (c *crm) FindObject(accessToken, objectTypeID, id, idProperty string, properties, associations []string) (Object, error) {
 	endpoint := cfg.objectsURL() + "/" + objectTypeID + "/" + id
 
 	params := url.Values{}
@@ -50,11 +50,11 @@ func (c *client) FindObject(accessToken, objectTypeID, id, idProperty string, pr
 	resCode, resBody, errs := agent.Bytes()
 
 	if len(errs) > 0 {
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("hubspot client request failed {endpoint=%s, code=%d, errs=%v}", endpoint, resCode, errors.Join(errs...)))
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("hubspot crm request failed {endpoint=%s, code=%d, errs=%v}", endpoint, resCode, errors.Join(errs...)))
 	}
 
 	if resCode != fiber.StatusOK {
-		return nil, fiber.NewError(resCode, fmt.Sprintf("hubspot client request failed {endpoint=%s, code=%d}", endpoint, resCode))
+		return nil, fiber.NewError(resCode, fmt.Sprintf("hubspot crm request failed {endpoint=%s, code=%d}", endpoint, resCode))
 	}
 
 	var baseObject BaseObject
@@ -66,7 +66,7 @@ func (c *client) FindObject(accessToken, objectTypeID, id, idProperty string, pr
 	return &baseObject, nil
 }
 
-func (c *client) FindBatch(accessToken, objectTypeID string, ids, properties []string) ([]Object, error) {
+func (c *crm) FindBatch(accessToken, objectTypeID string, ids, properties []string) ([]Object, error) {
 	if len(ids) == 0 {
 		return nil, fmt.Errorf("objects must not be empty")
 	}
@@ -102,11 +102,11 @@ func (c *client) FindBatch(accessToken, objectTypeID string, ids, properties []s
 	resCode, resBody, errs := agent.Bytes()
 
 	if len(errs) > 0 {
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("hubspot client request failed {endpoint=%s, code=%d, errs=%v}", endpoint, resCode, errors.Join(errs...)))
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("hubspot crm request failed {endpoint=%s, code=%d, errs=%v}", endpoint, resCode, errors.Join(errs...)))
 	}
 
 	if resCode != fiber.StatusOK {
-		return nil, fiber.NewError(resCode, fmt.Sprintf("hubspot client request failed {endpoint=%s, code=%d}", endpoint, resCode))
+		return nil, fiber.NewError(resCode, fmt.Sprintf("hubspot crm request failed {endpoint=%s, code=%d}", endpoint, resCode))
 	}
 
 	type batchResponseDTO struct {
@@ -119,7 +119,7 @@ func (c *client) FindBatch(accessToken, objectTypeID string, ids, properties []s
 	}
 
 	if len(resDTO.Results) != len(ids) {
-		return nil, fiber.NewError(fiber.StatusNotFound, fmt.Sprintf("expected %d client objects but got %d", len(ids), len(resDTO.Results)))
+		return nil, fiber.NewError(fiber.StatusNotFound, fmt.Sprintf("expected %d crm objects but got %d", len(ids), len(resDTO.Results)))
 	}
 
 	crmObjects := make([]Object, 0, len(resDTO.Results))
@@ -131,7 +131,7 @@ func (c *client) FindBatch(accessToken, objectTypeID string, ids, properties []s
 	return crmObjects, nil
 }
 
-func (c *client) FindObjectOwner(accessToken string, objectOwnerID string) (*ObjectOwner, error) {
+func (c *crm) FindObjectOwner(accessToken string, objectOwnerID string) (*ObjectOwner, error) {
 	endpoint := cfg.ownersURL() + "/" + objectOwnerID
 
 	agent := fiber.Get(endpoint)
@@ -140,11 +140,11 @@ func (c *client) FindObjectOwner(accessToken string, objectOwnerID string) (*Obj
 	resCode, resBody, errs := agent.Bytes()
 
 	if len(errs) > 0 {
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("hubspot client request failed {endpoint=%s, code=%d, errs=%v}", endpoint, resCode, errors.Join(errs...)))
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("hubspot crm request failed {endpoint=%s, code=%d, errs=%v}", endpoint, resCode, errors.Join(errs...)))
 	}
 
 	if resCode != fiber.StatusOK {
-		err := fiber.NewError(resCode, fmt.Sprintf("hubspot client request failed {endpoint=%s, code=%d}", endpoint, resCode))
+		err := fiber.NewError(resCode, fmt.Sprintf("hubspot crm request failed {endpoint=%s, code=%d}", endpoint, resCode))
 		return nil, err
 	}
 
@@ -157,7 +157,7 @@ func (c *client) FindObjectOwner(accessToken string, objectOwnerID string) (*Obj
 	return &objectOwner, nil
 }
 
-func (c *client) CreateObject(accessToken string, objectTypeID string, properties map[string]any, associations []any) error {
+func (c *crm) CreateObject(accessToken string, objectTypeID string, properties map[string]any, associations []any) error {
 	endpoint := cfg.objectsURL() + "/" + objectTypeID
 
 	agent := fiber.Post(endpoint)
@@ -177,17 +177,17 @@ func (c *client) CreateObject(accessToken string, objectTypeID string, propertie
 	resCode, _, errs := agent.Bytes()
 
 	if len(errs) > 0 {
-		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("hubspot client request failed {endpoint=%s, code=%d, errs=%v}", endpoint, resCode, errors.Join(errs...)))
+		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("hubspot crm request failed {endpoint=%s, code=%d, errs=%v}", endpoint, resCode, errors.Join(errs...)))
 	}
 
 	if resCode != fiber.StatusCreated {
-		return fiber.NewError(resCode, fmt.Sprintf("hubspot client request failed {endpoint=%s, code=%d}", endpoint, resCode))
+		return fiber.NewError(resCode, fmt.Sprintf("hubspot crm request failed {endpoint=%s, code=%d}", endpoint, resCode))
 	}
 
 	return nil
 }
 
-func (c *client) UpdateObject(accessToken, objectTypeID, id, idProperty string, properties map[string]any) error {
+func (c *crm) UpdateObject(accessToken, objectTypeID, id, idProperty string, properties map[string]any) error {
 	endpoint := cfg.objectsURL() + "/" + objectTypeID + "/" + id
 
 	if idProperty != "" {
@@ -210,10 +210,10 @@ func (c *client) UpdateObject(accessToken, objectTypeID, id, idProperty string, 
 	resCode, _, errs := agent.Bytes()
 
 	if len(errs) > 0 {
-		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("hubspot client request failed {endpoint=%s, code=%d, errs=%v}", endpoint, resCode, errors.Join(errs...)))
+		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("hubspot crm request failed {endpoint=%s, code=%d, errs=%v}", endpoint, resCode, errors.Join(errs...)))
 	}
 	if resCode != fiber.StatusOK {
-		return fiber.NewError(resCode, fmt.Sprintf("hubspot client request failed {endpoint=%s, code=%d}", endpoint, resCode))
+		return fiber.NewError(resCode, fmt.Sprintf("hubspot crm request failed {endpoint=%s, code=%d}", endpoint, resCode))
 	}
 
 	return nil

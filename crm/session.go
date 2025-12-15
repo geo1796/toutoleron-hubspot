@@ -20,15 +20,6 @@ type Session struct {
 	Object
 }
 
-func NewSession() *Session {
-	return &Session{
-		Object: NewBaseObject(
-			SessionInternalName,
-			SessionObjectTypeID,
-		),
-	}
-}
-
 func (s *Session) Name() string {
 	return s.GetProperty(SessionPropertyName)
 }

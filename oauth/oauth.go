@@ -10,7 +10,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-type Client interface {
+type OAuth interface {
 	GetSetupURL() string
 
 	GetTokensFromOAuthCode(code string) (refreshToken string, accessToken string, accessTokenExpiry time.Time, err error)
@@ -19,20 +19,20 @@ type Client interface {
 	DeleteRefreshToken(rft string) error
 }
 
-type client struct{}
+type oauth struct{}
 
-func NewClient() (Client, error) {
+func New() (OAuth, error) {
 	if !cfg.initialized {
 		return nil, fmt.Errorf("oauth not initialized")
 	}
-	return &client{}, nil
+	return &oauth{}, nil
 }
 
-func (c *client) GetSetupURL() string {
+func (o *oauth) GetSetupURL() string {
 	return cfg.setupURL
 }
 
-func (c *client) GetTokensFromOAuthCode(code string) (refreshToken string, accessToken string, accessTokenExpiry time.Time, err error) {
+func (o *oauth) GetTokensFromOAuthCode(code string) (refreshToken string, accessToken string, accessTokenExpiry time.Time, err error) {
 	agent := fiber.Post(cfg.baseURL + "/token")
 
 	formData := fiber.AcquireArgs()
@@ -68,7 +68,7 @@ func (c *client) GetTokensFromOAuthCode(code string) (refreshToken string, acces
 	return dto.RefreshToken, dto.AccessToken, dto.accessTokenExpiry(), nil
 }
 
-func (c *client) GetTokensFromRefreshToken(rft string) (refreshToken string, accessToken string, accessTokenExpiry time.Time, err error) {
+func (o *oauth) GetTokensFromRefreshToken(rft string) (refreshToken string, accessToken string, accessTokenExpiry time.Time, err error) {
 	agent := fiber.Post(cfg.baseURL + "/token")
 
 	agent.ContentType("application/x-www-form-urlencoded")
@@ -80,11 +80,11 @@ func (c *client) GetTokensFromRefreshToken(rft string) (refreshToken string, acc
 	resCode, body, errs := agent.Bytes()
 
 	if len(errs) > 0 {
-		return "", "", time.Time{}, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("hubspot client failed to refresh access token, response code: %d, errs: %v", resCode, errors.Join(errs...)))
+		return "", "", time.Time{}, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("hubspot oauth failed to refresh access token, response code: %d, errs: %v", resCode, errors.Join(errs...)))
 	}
 
 	if resCode != fiber.StatusOK {
-		return "", "", time.Time{}, fiber.NewError(resCode, fmt.Sprintf("hubspot client failed to refresh access token, response code: %d", resCode))
+		return "", "", time.Time{}, fiber.NewError(resCode, fmt.Sprintf("hubspot oauth failed to refresh access token, response code: %d", resCode))
 	}
 
 	var dto oauthTokens
@@ -96,17 +96,17 @@ func (c *client) GetTokensFromRefreshToken(rft string) (refreshToken string, acc
 	return dto.RefreshToken, dto.AccessToken, dto.accessTokenExpiry(), nil
 }
 
-func (c *client) GetRefreshTokenInfo(rft string) (userEmail string, internalUserID string, err error) {
+func (o *oauth) GetRefreshTokenInfo(rft string) (userEmail string, internalUserID string, err error) {
 	agent := fiber.Get(cfg.baseURL + "/refresh-tokens/" + rft)
 
 	resCode, body, errs := agent.Bytes()
 
 	if len(errs) > 0 {
-		return "", "", fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("hubspot client failed to retrieve user from refresh token, response code: %d, errs: %v", resCode, errors.Join(errs...)))
+		return "", "", fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("hubspot oauth failed to retrieve user from refresh token, response code: %d, errs: %v", resCode, errors.Join(errs...)))
 	}
 
 	if resCode != fiber.StatusOK {
-		return "", "", fiber.NewError(resCode, fmt.Sprintf("hubspot client failed to retrieve user from refresh token, response code: %d", resCode))
+		return "", "", fiber.NewError(resCode, fmt.Sprintf("hubspot oauth failed to retrieve user from refresh token, response code: %d", resCode))
 	}
 
 	var dto refreshTokenInfo
@@ -118,17 +118,17 @@ func (c *client) GetRefreshTokenInfo(rft string) (userEmail string, internalUser
 	return dto.UserEmail, strconv.Itoa(dto.InternalUserID), nil
 }
 
-func (c *client) DeleteRefreshToken(rft string) error {
+func (o *oauth) DeleteRefreshToken(rft string) error {
 	agent := fiber.Delete(cfg.baseURL + "/refresh-tokens/" + rft)
 
 	resCode, _, errs := agent.Bytes()
 
 	if len(errs) > 0 {
-		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("hubspot client failed to delete refresh token: %v", errs))
+		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("hubspot oauth failed to delete refresh token: %v", errs))
 	}
 
 	if resCode != fiber.StatusNoContent {
-		err := fiber.NewError(resCode, fmt.Sprintf("hubspot client failed to delete refresh token, response code: %d", resCode))
+		err := fiber.NewError(resCode, fmt.Sprintf("hubspot oauth failed to delete refresh token, response code: %d", resCode))
 		return err
 	}
 

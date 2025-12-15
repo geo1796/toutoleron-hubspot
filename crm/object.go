@@ -26,15 +26,6 @@ type AssociationData struct {
 	Type string `json:"type"`
 }
 
-func NewBaseObject(internalName string, objectTypeID string) *BaseObject {
-	return &BaseObject{
-		InternalName: internalName,
-		ObjectTypeID: objectTypeID,
-		Properties:   make(map[string]*string),
-		Associations: make(map[string]ObjectAssociations),
-	}
-}
-
 func (o *BaseObject) GetInternalName() string {
 	return o.InternalName
 }

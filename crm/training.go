@@ -20,15 +20,6 @@ type Training struct {
 	Object
 }
 
-func NewTraining() *Training {
-	return &Training{
-		Object: NewBaseObject(
-			TrainingInternalName,
-			TrainingObjectTypeID,
-		),
-	}
-}
-
 func (t *Training) Name() string {
 	return t.GetProperty(TrainingPropertyName)
 }
