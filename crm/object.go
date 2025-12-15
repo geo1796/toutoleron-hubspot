@@ -1,11 +1,5 @@
 package crm
 
-import (
-	"os"
-)
-
-var accountID = os.Getenv("HUBSPOT_ACCOUNT_ID")
-
 type Object interface {
 	GetInternalName() string
 	GetObjectTypeID() string
@@ -58,7 +52,7 @@ func (o *BaseObject) GetProperties() map[string]*string {
 }
 
 func (o *BaseObject) GetAssociations(internalName string) []AssociationData {
-	return o.Associations["p"+accountID+"_"+internalName].Results
+	return o.Associations["p"+cfg.accountID+"_"+internalName].Results
 }
 
 func (o *BaseObject) GetProperty(key string) string {
