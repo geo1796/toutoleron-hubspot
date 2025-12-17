@@ -27,6 +27,20 @@ func New() (CRM, error) {
 	return &crm{}, nil
 }
 
+func setBearerToken(agent *fiber.Agent, accessToken string) error {
+	if cfg.staticAuth != "" && accessToken == "" {
+		agent.Request().Header.Add(fiber.HeaderAuthorization, "Bearer "+cfg.staticAuth)
+		return nil
+	}
+
+	if cfg.staticAuth == "" && accessToken != "" {
+		agent.Request().Header.Add(fiber.HeaderAuthorization, "Bearer "+accessToken)
+		return nil
+	}
+
+	return errors.New("exactly one of staticAuth or accessToken must be set")
+}
+
 func (c *crm) FindObject(accessToken, objectTypeID, id, idProperty string, properties, associations []string) (Object, error) {
 	endpoint := cfg.objectsURL() + "/" + objectTypeID + "/" + id
 
@@ -45,7 +59,9 @@ func (c *crm) FindObject(accessToken, objectTypeID, id, idProperty string, prope
 	}
 
 	agent := fiber.Get(endpoint)
-	agent.Request().Header.Add(fiber.HeaderAuthorization, "Bearer "+accessToken)
+	if err := setBearerToken(agent, accessToken); err != nil {
+		return nil, err
+	}
 
 	resCode, resBody, errs := agent.Bytes()
 
@@ -94,8 +110,10 @@ func (c *crm) FindBatch(accessToken, objectTypeID string, ids, properties []stri
 	}
 
 	agent := fiber.Post(endpoint)
-	agent.Request().Header.Add(fiber.HeaderAuthorization, "Bearer "+accessToken)
 	agent.Request().Header.Add(fiber.HeaderContentType, fiber.MIMEApplicationJSON)
+	if err = setBearerToken(agent, accessToken); err != nil {
+		return nil, err
+	}
 
 	agent.Body(reqBody)
 
@@ -135,7 +153,9 @@ func (c *crm) FindObjectOwner(accessToken string, objectOwnerID string) (*Object
 	endpoint := cfg.ownersURL() + "/" + objectOwnerID
 
 	agent := fiber.Get(endpoint)
-	agent.Request().Header.Add(fiber.HeaderAuthorization, "Bearer "+accessToken)
+	if err := setBearerToken(agent, accessToken); err != nil {
+		return nil, err
+	}
 
 	resCode, resBody, errs := agent.Bytes()
 
@@ -161,8 +181,10 @@ func (c *crm) CreateObject(accessToken string, objectTypeID string, properties m
 	endpoint := cfg.objectsURL() + "/" + objectTypeID
 
 	agent := fiber.Post(endpoint)
-	agent.Request().Header.Add(fiber.HeaderAuthorization, "Bearer "+accessToken)
 	agent.Request().Header.Add(fiber.HeaderContentType, fiber.MIMEApplicationJSON)
+	if err := setBearerToken(agent, accessToken); err != nil {
+		return err
+	}
 
 	reqBody, err := json.Marshal(map[string]any{
 		"properties":   properties,
@@ -197,8 +219,10 @@ func (c *crm) UpdateObject(accessToken, objectTypeID, id, idProperty string, pro
 	}
 
 	agent := fiber.Patch(endpoint)
-	agent.Request().Header.Add(fiber.HeaderAuthorization, "Bearer "+accessToken)
 	agent.Request().Header.Add(fiber.HeaderContentType, fiber.MIMEApplicationJSON)
+	if err := setBearerToken(agent, accessToken); err != nil {
+		return err
+	}
 
 	reqBody, err := json.Marshal(map[string]any{"properties": properties})
 	if err != nil {

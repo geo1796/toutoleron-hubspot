@@ -1,6 +1,8 @@
 package crm
 
-import "fmt"
+import (
+	"errors"
+)
 
 var cfg config
 
@@ -8,6 +10,7 @@ type config struct {
 	initialized bool
 	accountID   string
 	baseURL     string
+	staticAuth  string
 }
 
 func (c config) objectsURL() string {
@@ -18,12 +21,13 @@ func (c config) ownersURL() string {
 	return c.baseURL + "/owners"
 }
 
-func Init(accountID, baseURL string) error {
+func Init(accountID, baseURL, staticAuth string) error {
 	if cfg.initialized {
-		return fmt.Errorf("crm already initialized")
+		return errors.New("crm already initialized")
 	}
 	cfg.initialized = true
 	cfg.accountID = accountID
 	cfg.baseURL = baseURL
+	cfg.staticAuth = staticAuth
 	return nil
 }
