@@ -10,12 +10,11 @@ type Config struct {
 	clientSecret string
 	redirectURL  string
 	setupURL     string
-	baseURL      string
 }
 
 func Init(
 	clientID, clientSecret string,
-	redirectURL, setupURL, baseURL string,
+	redirectURL, setupURL string,
 ) error {
 	if cfg.initialized {
 		return fmt.Errorf("oauth already initialized")
@@ -25,6 +24,5 @@ func Init(
 	cfg.clientSecret = clientSecret
 	cfg.redirectURL = redirectURL
 	cfg.setupURL = setupURL
-	cfg.baseURL = baseURL
 	return nil
 }

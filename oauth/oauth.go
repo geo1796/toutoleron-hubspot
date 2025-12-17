@@ -10,6 +10,8 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+const baseURL = "https://api.hubapi.com/oauth/v1/"
+
 type OAuth interface {
 	GetSetupURL() string
 
@@ -33,7 +35,7 @@ func (o *oauth) GetSetupURL() string {
 }
 
 func (o *oauth) GetTokensFromOAuthCode(code string) (refreshToken string, accessToken string, accessTokenExpiry time.Time, err error) {
-	agent := fiber.Post(cfg.baseURL + "/token")
+	agent := fiber.Post(baseURL + "token")
 
 	formData := fiber.AcquireArgs()
 
@@ -69,7 +71,7 @@ func (o *oauth) GetTokensFromOAuthCode(code string) (refreshToken string, access
 }
 
 func (o *oauth) GetTokensFromRefreshToken(rft string) (refreshToken string, accessToken string, accessTokenExpiry time.Time, err error) {
-	agent := fiber.Post(cfg.baseURL + "/token")
+	agent := fiber.Post(baseURL + "token")
 
 	agent.ContentType("application/x-www-form-urlencoded")
 
@@ -97,7 +99,7 @@ func (o *oauth) GetTokensFromRefreshToken(rft string) (refreshToken string, acce
 }
 
 func (o *oauth) GetRefreshTokenInfo(rft string) (userEmail string, internalUserID string, err error) {
-	agent := fiber.Get(cfg.baseURL + "/refresh-tokens/" + rft)
+	agent := fiber.Get(baseURL + "refresh-tokens/" + rft)
 
 	resCode, body, errs := agent.Bytes()
 
@@ -119,7 +121,7 @@ func (o *oauth) GetRefreshTokenInfo(rft string) (userEmail string, internalUserI
 }
 
 func (o *oauth) DeleteRefreshToken(rft string) error {
-	agent := fiber.Delete(cfg.baseURL + "/refresh-tokens/" + rft)
+	agent := fiber.Delete(baseURL + "refresh-tokens/" + rft)
 
 	resCode, _, errs := agent.Bytes()
 
