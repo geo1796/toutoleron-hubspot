@@ -28,6 +28,10 @@ type AssociationData struct {
 	Type string `json:"type"`
 }
 
+func (o *BaseObject) GetRecordLink() string {
+	return o.RecordLink
+}
+
 func (o *BaseObject) GetInternalName() string {
 	return o.InternalName
 }
