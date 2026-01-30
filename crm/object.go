@@ -1,9 +1,9 @@
 package crm
 
 type Object interface {
-	GetRecordLink() string
 	GetInternalName() string
 	GetObjectTypeID() string
+	GetRecordLink() string
 	GetID() string
 	GetProperties() map[string]*string
 	GetProperty(key string) string
@@ -13,6 +13,7 @@ type Object interface {
 type BaseObject struct {
 	InternalName string
 	ObjectTypeID string
+	RecordLink   string                        `json:"url"`
 	ID           string                        `json:"id"`
 	Properties   map[string]*string            `json:"properties"`
 	Associations map[string]ObjectAssociations `json:"associations"`
@@ -25,10 +26,6 @@ type ObjectAssociations struct {
 type AssociationData struct {
 	ID   string `json:"id"`
 	Type string `json:"type"`
-}
-
-func (o *BaseObject) GetRecordLink() string {
-	return "https://app-eu1.hubspot.com/contacts/" + cfg.accountID + "/record/" + o.ObjectTypeID + "/" + o.ID
 }
 
 func (o *BaseObject) GetInternalName() string {
