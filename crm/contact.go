@@ -11,7 +11,7 @@ const (
 	ContactPropertyAddress    = "address"
 	ContactPropertyCity       = "city"
 	ContactPropertyZip        = "zip"
-	ContactPropertyJob        = "job"
+	ContactPropertyCategory   = "categorie"
 	ContactPropertyWedaID     = "user_id_new"
 	ContactPropertySpeciality = "specialite"
 )
@@ -48,8 +48,8 @@ func (c *Contact) Zip() string {
 	return c.GetProperty(ContactPropertyZip)
 }
 
-func (c *Contact) Job() string {
-	return c.GetProperty(ContactPropertyJob)
+func (c *Contact) Category() string {
+	return c.GetProperty(ContactPropertyCategory)
 }
 
 func (c *Contact) WedaID() string {
